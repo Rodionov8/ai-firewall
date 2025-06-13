@@ -7,7 +7,7 @@ import threading
 from scapy.all import sniff, IP, TCP
 from datetime import datetime
 
-# Настройки фаервола
+
 REQUEST_LIMIT = 100
 TIME_WINDOW = 60
 BLOCK_TIME = 3600
@@ -20,13 +20,13 @@ def unblock_ip_after_delay(ip, log_entry):
     subprocess.call(['iptables', '-D', 'INPUT', '-s', ip, '-j', 'DROP'])
     print(f"[Фаервол] IP-адрес {ip} разблокирован.")
     
-    # Логирование разблокировки
+
     log_entry["action"] = "UNBLOCK"
     log_entry["unblock_time"] = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     with open("/var/log/firewall_blocked_ips.log", "a", encoding="utf-8") as log_file:
         log_file.write(f"{log_entry}\n")
     
-    ip_request_count[ip] = 0  # Сброс счетчика
+    ip_request_count[ip] = 0 
 
 def block_ip(ip, reason, packet=None):
     """Блокирует IP и запускает таймер для разблокировки."""
@@ -49,9 +49,9 @@ def block_ip(ip, reason, packet=None):
         if packet.haslayer(TCP):
             log_entry["src_port"] = packet[TCP].sport
             log_entry["dst_port"] = packet[TCP].dport
-            log_entry["tcp_flags"] = str(packet[TCP].flags)  # Преобразуем флаги в строку
+            log_entry["tcp_flags"] = str(packet[TCP].flags)  
 
-    # Запись блокировки в лог
+
     log_path = "/var/log/firewall_blocked_ips.log"
     if not os.path.exists(log_path):
         open(log_path, "w").close()
@@ -59,7 +59,7 @@ def block_ip(ip, reason, packet=None):
     with open(log_path, "a", encoding="utf-8") as log_file:
         log_file.write(f"{log_entry}\n")
 
-    # Запуск разблокировки в отдельном потоке
+    
     threading.Thread(
         target=unblock_ip_after_delay,
         args=(ip, log_entry)
